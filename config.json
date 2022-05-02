@@ -1,11 +1,10 @@
 {
   "development": {
-    "mute_time": 900000,
     "bot_token": "OTY4MjIyNDk3NTU0MTk4NjA4.YmbteA.QWnICWwIkQ_wenytPdLofdf81P0",
-    "title": "VC Unmute",
+    "title": "Troll Emojifier",
     "description": "🗿🗿🗿🗿🗿🗿🗿🗿🗿🗿🗿🗿",
-    "prefix": "-",
-    "database": "vc",
+    "prefix": "?",
+    "database": "troll",
     "guild": "968210951440588890",
     "admins": ["894783593694527499"],
     "activity": {
@@ -16,6 +15,9 @@
       "help": "Displays this help message.",
       "help admin": "Displays commands for bot developers and admins."
     },
-    "admin_commands": {}
+    "admin_commands": {
+      "troll": "<user id> <emoji>",
+      "untroll": "<user id>"
+    }
   }
 }

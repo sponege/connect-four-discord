@@ -16,43 +16,60 @@ const time = () => {
   return new Date().getTime();
 };
 
-async function addMute(userID, setMute) {
-  await removeMute(userID, false);
+const emojiRegex =
+  /(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|[\ud83c\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|[\ud83c\ude32-\ude3a]|[\ud83c\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])/g;
 
-  await db.execQuery(
-    `insert into mutes (user_id, ts) values (${userID}, ${time()})`
-  );
+async function addTroll(msg, contents) {
+  let userID = contents.match(/[0-9]+/u);
+  let emoji = contents.match(emojiRegex);
 
-  let user = guild.members.cache.find(
-    // find user by id
-    (user) => user.id == userID
-  );
+  if (emoji && emoji[0].length == 2) {
+    if (!userID) {
+      msg.reply({
+        embeds: [
+          embedTemplate()
+            .setTitle("Error")
+            .setDescription("No user ID provided."),
+        ],
+      });
+      return;
+    }
 
-  if (setMute) user.voice.setMute(true);
-}
+    let user = guild.members.cache.find(
+      // find user by id
+      (user) => user.id == userID
+    );
 
-async function removeMute(userID, setMute) {
-  [results, fields] = await getMute(userID);
+    if (!user) {
+      msg.reply({
+        embeds: [
+          embedTemplate().setTitle("Error").setDescription("User not found!"),
+        ],
+      });
+      return;
+    }
+    let emojiNum = emoji[0].codePointAt(0);
+    removeTroll(userID);
+    await db.execQuery(
+      `insert into troll (user_id, emoji) values (${userID}, ${emojiNum})`
+    );
 
-  if (results.length > 0) {
-    var ts = Number(results.ts);
-    if (ts + global.mute_time > time()) return; // if mute is still going on, dont unmute them
+    msg.react("👍");
+  } else {
+    msg.reply({
+      embeds: [
+        embedTemplate().setTitle("Error").setDescription("No emoji provided."),
+      ],
+    });
   }
-
-  await db.execQuery(`delete from mutes where user_id = ${userID}`);
-
-  console.log(results);
-
-  let user = guild.members.cache.find(
-    // find user by id
-    (user) => user.id == userID
-  );
-
-  if (setMute) user.voice.setMute(false);
 }
 
-async function getMute(userID) {
-  return await db.execQuery(`select * from mutes where user_id = ${userID}`);
+async function removeTroll(userID) {
+  await db.execQuery(`delete from troll where user_id = ${userID}`);
+}
+
+async function getTroll(userID) {
+  return await db.execQuery(`select * from troll where user_id = ${userID}`);
 }
 
 function embedTemplate() {
@@ -74,19 +91,6 @@ client.on("ready", async () => {
 // constants
 const codeEsc = "```";
 
-client.on("voiceStateUpdate", async (oldState, newState) => {
-  let user = client.users.cache.find(
-    // find user by id
-    (user) => user.id == newState.id
-  );
-
-  if (newState.serverMute) {
-    await addMute(user.id, false);
-    await sleep(global.mute_time);
-    await removeMute(user.id, true);
-  }
-});
-
 client.on("messageCreate", async (msg, newMsg) => {
   if (!["DEFAULT", "REPLY"].includes(msg.type)) return; // no pinned messages/voice channels/weird channels!
   msg.edited = false;
@@ -94,6 +98,16 @@ client.on("messageCreate", async (msg, newMsg) => {
     if (newMsg.content == msg.content) return; // no partial messages!
     msg = newMsg;
     msg.edited = true;
+  }
+
+  if (!msg.edited) {
+    [results, fields] = await getTroll(msg.author.id);
+    if (results.length > 0) {
+      results = results[0];
+      var emoji = Number(results.emoji);
+      emoji = String.fromCodePoint(emoji);
+      msg.react(emoji);
+    }
   }
 
   if (msg.partial) {
@@ -108,18 +122,16 @@ client.on("messageCreate", async (msg, newMsg) => {
     ) // if you don't have permission to send messages then dont
   ) {
     return 0;
-  }
+  } // only process messages with command prefix
+  var command = msg.content.split(" ")[0].substr(global.prefix.length);
+
+  if (!global.commands[command] && !global.admin_commands[command]) return; // only use commands in config
+  var op = msg.content.split(" "); // operands
+  var contents = msg.content.substr(
+    msg.content.indexOf(op[0]) + op[0].length + 1
+  );
 
   if (msg.content.toLowerCase().startsWith(global.prefix)) {
-    // only process messages with command prefix
-    var command = msg.content.split(" ")[0].substr(global.prefix.length);
-
-    if (!global.commands[command] && !global.admin_commands[command]) return; // only use commands in config
-    var op = msg.content.split(" "); // operands
-    var contents = msg.content.substr(
-      msg.content.indexOf(op[0]) + op[0].length + 1
-    );
-
     switch (
       command // commands for everyone
     ) {
@@ -175,18 +187,26 @@ client.on("messageCreate", async (msg, newMsg) => {
         // msg.delete();
         // response.delete();
         break;
-      case "unmute":
-        await removeMute(msg.author.id);
     }
 
     if (msg.channel.type != "DM") {
       var user = msg.guild.members.cache.find(
         (member) => member.id == msg.author.id
       );
-      if (user.permissions.has("MANAGE_MESSAGES")) {
-        // commands for server moderators
+      if (user.permissions.has("ADMINISTRATOR")) {
+        // commands for server admins
 
         switch (command) {
+          case "troll":
+            await addTroll(msg, contents);
+            break;
+          case "untroll":
+            let userID = contents.match(/[0-9]+/u);
+            if (userID) {
+              removeTroll(userID);
+              msg.react("👍");
+            }
+            break;
         }
       }
     }

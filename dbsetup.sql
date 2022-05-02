@@ -1,8 +1,8 @@
 alter user 'root'@'localhost' identified by 'password';
-create database vc;
-use vc;
+create database troll;
+use troll;
 
-create table mutes (
+create table troll (
   user_id bigint primary key,
-  ts bigint
+  emoji bigint
 );
