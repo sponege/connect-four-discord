@@ -1,21 +1,21 @@
 {
-  "name": "moyai-bot",
+  "name": "vc-auto-unmute",
   "version": "1.0.0",
-  "description": "Jordan's Discord bot template",
+  "description": "Automatically unmutes someone in a VC after a specific amount of time has elapsed. ",
   "main": "bot.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sponege/moyai-bot.git"
+    "url": "git+https://github.com/sponege/vc-auto-unmute.git"
   },
   "author": "sponege",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/sponege/moyai-bot/issues"
+    "url": "https://github.com/sponege/vc-auto-unmute/issues"
   },
-  "homepage": "https://github.com/sponege/moyai-bot#readme",
+  "homepage": "https://github.com/sponege/vc-auto-unmute#readme",
   "dependencies": {
     "discord.js": "^13.6.0"
   }
