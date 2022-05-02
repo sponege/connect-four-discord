@@ -1,9 +1,12 @@
 {
   "development": {
-    "bot_token": "OTY4MjIyNDk3NTU0MTk4NjA4.YmbteA.F4IDWw6P8bf_tB7LB53x3btRBg8",
-    "title": "MoyaiBot",
+    "mute_time": 5000,
+    "bot_token": "OTY4MjIyNDk3NTU0MTk4NjA4.YmbteA.QWnICWwIkQ_wenytPdLofdf81P0",
+    "title": "VC Unmute",
     "description": "🗿🗿🗿🗿🗿🗿🗿🗿🗿🗿🗿🗿",
-    "prefix": "m.",
+    "prefix": "-",
+    "database": "vc",
+    "guild": "968210951440588890",
     "admins": ["894783593694527499"],
     "activity": {
       "type": "WATCHING",

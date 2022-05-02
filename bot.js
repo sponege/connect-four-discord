@@ -7,30 +7,85 @@ const client = new Client({
 });
 
 require("./config"); // bot configuration
+var db = require("./db"); // database init
 
 client.login(process.env["TOKEN"] || global.bot_token);
 
-async function updateStatus(client) {
-  while (true) {
-    client.user.setActivity(`${global.prefix}${global.activity.command}`, {
-      type: global.activity.type,
-    });
-    await sleep(5 * 1000);
+const time = () => {
+  // returns timestamp
+  return new Date().getTime();
+};
+
+async function addMute(userID, setMute) {
+  await removeMute(userID, false);
+
+  await db.execQuery(
+    `insert into mutes (user_id, ts) values (${userID}, ${time()})`
+  );
+
+  let user = guild.members.cache.find(
+    // find user by id
+    (user) => user.id == userID
+  );
+
+  if (setMute) user.voice.setMute(true);
+}
+
+async function removeMute(userID, setMute) {
+  [results, fields] = await getMute(userID);
+
+  if (results.length > 0) {
+    var ts = Number(results.ts);
+    if (ts + global.mute_time > time()) return; // if mute is still going on, dont unmute them
   }
+
+  await db.execQuery(`delete from mutes where user_id = ${userID}`);
+
+  console.log(results);
+
+  let user = guild.members.cache.find(
+    // find user by id
+    (user) => user.id == userID
+  );
+
+  if (setMute) user.voice.setMute(false);
+}
+
+async function getMute(userID) {
+  return await db.execQuery(`select * from mutes where user_id = ${userID}`);
 }
 
 function embedTemplate() {
   return new MessageEmbed().setColor("RANDOM");
 }
 
+var guild;
+
 client.on("ready", async () => {
   console.log(`Logged in as ${client.user.tag}!`);
 
-  updateStatus(client); // keep status up to date
+  guild = client.guilds.cache.get(global.guild);
+
+  guild.voiceStates.cache.forEach(async (voiceState) => {
+    await removeMute(voiceState.id);
+  });
 });
 
 // constants
 const codeEsc = "```";
+
+client.on("voiceStateUpdate", async (oldState, newState) => {
+  let user = client.users.cache.find(
+    // find user by id
+    (user) => user.id == newState.id
+  );
+
+  if (newState.serverMute) {
+    await addMute(user.id, false);
+    await sleep(global.mute_time);
+    await removeMute(user.id, true);
+  }
+});
 
 client.on("messageCreate", async (msg) => {
   if (msg.partial) {
@@ -110,6 +165,8 @@ client.on("messageCreate", async (msg) => {
         // msg.delete();
         // response.delete();
         break;
+      case "unmute":
+        await removeMute(msg.author.id);
     }
 
     if (msg.channel.type != "DM") {
