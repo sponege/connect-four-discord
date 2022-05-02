@@ -88,6 +88,14 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
 });
 
 client.on("messageCreate", async (msg) => {
+  if (!["DEFAULT", "REPLY"].includes(msg.type)) return; // no pinned messages/voice channels/weird channels!
+  msg.edited = false;
+  if (newMsg) {
+    if (newMsg.content == msg.content) return; // no partial messages!
+    msg = newMsg;
+    msg.edited = true;
+  }
+
   if (msg.partial) {
     msg = await msg.fetch();
   }
@@ -105,6 +113,8 @@ client.on("messageCreate", async (msg) => {
   if (msg.content.toLowerCase().startsWith(global.prefix)) {
     // only process messages with command prefix
     var command = msg.content.split(" ")[0].substr(global.prefix.length);
+
+    if (!global.commands[command] && !global.admin_commands[command]) return; // only use commands in config
     var op = msg.content.split(" "); // operands
     var contents = msg.content.substr(
       msg.content.indexOf(op[0]) + op[0].length + 1
