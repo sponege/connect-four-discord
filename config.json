@@ -15,6 +15,7 @@
     "commands": {
       "help": "Displays this help message.",
       "help admin": "Displays commands for bot developers and admins."
-    }
+    },
+    "admin_commands": {}
   }
 }
