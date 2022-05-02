@@ -1,5 +1,5 @@
-# VC Auto-Unmute Bot
-Automatically unmutes someone in a VC after a specific amount of time has elapsed.
+# Troll Emojifier
+Gives trolls a special emoji for each message they send :D
 
 # Installation
 Install [Node.js](https://nodejs.org/) for your OS of choice
