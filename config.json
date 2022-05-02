@@ -14,8 +14,7 @@
     },
     "commands": {
       "help": "Displays this help message.",
-      "help admin": "Displays commands for bot developers and admins.",
-      "echo": "Echoes text (dangerous ping everyone XD)"
+      "help admin": "Displays commands for bot developers and admins."
     }
   }
 }

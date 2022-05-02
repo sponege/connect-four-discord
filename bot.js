@@ -87,7 +87,7 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
   }
 });
 
-client.on("messageCreate", async (msg) => {
+client.on("messageCreate", async (msg, newMsg) => {
   if (!["DEFAULT", "REPLY"].includes(msg.type)) return; // no pinned messages/voice channels/weird channels!
   msg.edited = false;
   if (newMsg) {
