@@ -6,8 +6,6 @@ Install [Node.js](https://nodejs.org/) for your OS of choice
 
 Install [MySQL](https://www.mysql.com/downloads/) or [MariaDB](https://mariadb.org/download/) for your OS of choice (I would highly recommend MariaDB for simplicity)
 
-Also install [Discord Chat Exporter CLI](https://github.com/Tyrrrz/DiscordChatExporter)
-
 # Commands
 ```
 npm i
