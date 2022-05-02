@@ -49,7 +49,7 @@ async function addTroll(msg, contents) {
       return;
     }
     let emojiNum = emoji[0].codePointAt(0);
-    removeTroll(userID);
+    await removeTroll(userID);
     await db.execQuery(
       `insert into troll (user_id, emoji) values (${userID}, ${emojiNum})`
     );
