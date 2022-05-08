@@ -1,5 +1,5 @@
 {
-  "name": "vc-auto-unmute",
+  "name": "troll-emojifier",
   "version": "1.0.0",
   "description": "Automatically unmutes someone in a VC after a specific amount of time has elapsed. ",
   "main": "bot.js",
@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sponege/vc-auto-unmute.git"
+    "url": "git+https://github.com/sponege/troll-emojifier.git"
   },
   "author": "sponege",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/sponege/vc-auto-unmute/issues"
+    "url": "https://github.com/sponege/troll-emojifier/issues"
   },
-  "homepage": "https://github.com/sponege/vc-auto-unmute#readme",
+  "homepage": "https://github.com/sponege/troll-emojifier#readme",
   "dependencies": {
     "discord.js": "^13.6.0"
   }

@@ -1,12 +1,12 @@
 {
   "development": {
-    "bot_token": "OTY4MjIyNDk3NTU0MTk4NjA4.YmbteA.QWnICWwIkQ_wenytPdLofdf81P0",
+    "bot_token": "OTcyNjYzOTY1NjM5NDA5NzU0.GvOY0n.w47237SF1Rys30ju6h43vElcS9EZgeZ7H5ipZw",
     "title": "Troll Emojifier",
     "description": "🗿🗿🗿🗿🗿🗿🗿🗿🗿🗿🗿🗿",
     "prefix": "?",
     "database": "troll",
-    "guild": "968210951440588890",
-    "admins": ["894783593694527499"],
+    "guild": "926553373870796820",
+    "admins": ["894783593694527499", "706881279827902530"],
     "activity": {
       "type": "WATCHING",
       "command": "echo <message>"
@@ -16,7 +16,7 @@
       "help admin": "Displays commands for bot developers and admins."
     },
     "admin_commands": {
-      "troll": "<user id> <emoji>",
+      "troll": "<emoji> <user id>",
       "untroll": "<user id>"
     }
   }
