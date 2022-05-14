@@ -1,23 +1,40 @@
 {
   "development": {
-    "bot_token": "OTcyNjYzOTY1NjM5NDA5NzU0.GvOY0n.w47237SF1Rys30ju6h43vElcS9EZgeZ7H5ipZw",
-    "title": "Troll Emojifier",
-    "description": "🗿🗿🗿🗿🗿🗿🗿🗿🗿🗿🗿🗿",
-    "prefix": "?",
-    "database": "troll",
-    "guild": "926553373870796820",
+    "bot_token": "OTczNDM1MTczMzM1MTAxNDcw.G0Od1t.egZ_hrpAVWnmw3N-3LhfhR30oVwtzo3XZ3DHjM",
+    "title": "Connect 4 Event",
+    "description": "Join a team to play!",
+    "prefix": ".",
+    "database": "connect4",
+    "width": 7,
+    "height": 6,
+    "spamBlacklistCount": 3,
+    "guild": "968210951440588890",
+    "ekrem": "974037476052193360",
+    "channelNames": {
+      "chooseTeam": "choose-your-team",
+      "redTeam": "red-team",
+      "blueTeam": "blue-team",
+      "trashTalk": "trash-talk"
+    },
+    "roleNames": {
+      "redTeam": "red team",
+      "blueTeam": "blue team"
+    },
     "admins": ["894783593694527499", "706881279827902530"],
     "activity": {
       "type": "WATCHING",
       "command": "echo <message>"
     },
     "commands": {
+      "top": "Lists most active players.",
       "help": "Displays this help message.",
       "help admin": "Displays commands for bot developers and admins."
     },
     "admin_commands": {
-      "troll": "<emoji> <user id>",
-      "untroll": "<user id>"
+      "list": "lists bot servers",
+      "reset": "Fucking resets *everything*",
+      "blacklist": "Blasklists a player",
+      "unblacklist": "Unblacklists a player"
     }
   }
 }
