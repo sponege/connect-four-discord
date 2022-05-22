@@ -1,4 +1,7 @@
-const { Client, Intents, MessageEmbed } = require("discord.js");
+import Discord, { Client, Intents, MessageEmbed } from "discord.js";
+import config from "./config.js"; // bot configuration
+import db from "./db.js"; // database init
+
 const client = new Client({
   intents: new Intents(32767), // all intents
   partials: [
@@ -6,10 +9,9 @@ const client = new Client({
   ],
 });
 
-require("./config"); // bot configuration
-var db = require("./db"); // database init
+let row;
 
-client.login(process.env["TOKEN"] || global.bot_token);
+client.login(process.env["TOKEN"] || config.bot_token);
 
 function embedTemplate() {
   return new MessageEmbed().setColor("RANDOM");
@@ -24,7 +26,7 @@ async function unblacklistPlayer(user_id) {
 }
 
 async function isBlacklisted(user_id) {
-  [results, fields] = await db.execQuery(
+  let [results, fields] = await db.execQuery(
     `select * from blacklist where user_id = ${user_id}`
   );
   return results.length > 0;
@@ -42,7 +44,7 @@ function* range2d(coords) {
 }
 
 function checkFourInARow(colors) {
-  const [w, h] = [global.width, global.height];
+  const [w, h] = [config.width, config.height];
 
   function check(x, y) {
     return colors.includes(board[y][x]);
@@ -101,14 +103,14 @@ function checkFourInARow(colors) {
 }
 
 async function getWins() {
-  [results, fields] = await db.execQuery(`select red, blue from wins`);
+  let [results, fields] = await db.execQuery(`select red, blue from wins`);
   if (results.length == 0) {
     global.roundNum = 1;
     // await updateMsg();
     await db.execQuery(`insert into wins (red, blue) values (0, 0)`);
     global = { ...global, red: 0, blue: 0 };
   } else {
-    result = results[0];
+    let result = results[0];
     global = { ...global, ...result };
   }
 }
@@ -120,11 +122,11 @@ async function initBoard() {
   if (!board) {
     board = [];
     row = [];
-    for (var i = 0; i < global.width; i++) {
+    for (var i = 0; i < config.width; i++) {
       // 7 columns
       row.push(0);
     }
-    for (var i = 0; i < global.height; i++) {
+    for (var i = 0; i < config.height; i++) {
       // 6 rows
       board.push(JSON.parse(JSON.stringify(row)));
     }
@@ -161,7 +163,7 @@ async function placePiece(x, color, msg) {
         await db.execQuery(`update state set whose_turn = ${newTurn}`);
         global.whose_turn = newTurn;
 
-        [results, fields] = await db.execQuery(
+        let [results, fields] = await db.execQuery(
           `select user_id from users where user_id = ${msg.author.id}`
         );
         if (results.length == 0) {
@@ -208,7 +210,7 @@ async function getBoardEmbed() {
 
 async function updateEmbedWithDescription(embed) {
   await getState();
-  [results, fields] = await db.execQuery(
+  let [results, fields] = await db.execQuery(
     `select * from moves where round_number = ${global.round_number} order by move_number desc limit 1`
   );
 
@@ -229,10 +231,10 @@ async function updateEmbedWithDescription(embed) {
   }
 
   if (results.length > 0) {
-    result = results[0];
+    let result = results[0];
     setAdd(result);
   } else {
-    [results, fields] = await db.execQuery(
+    let [results, fields] = await db.execQuery(
       `select * from moves where round_number = ${
         global.round_number - 1
       } order by move_number desc limit 1`
@@ -251,7 +253,7 @@ async function updateEkrem() {
 
 async function getState() {
   var update = false;
-  [results, fields] = await db.execQuery("select * from state");
+  let [results, fields] = await db.execQuery("select * from state");
   if (results.length == 0) {
     update = true;
     console.log(ekrem);
@@ -262,14 +264,14 @@ async function getState() {
           .setDescription("ur not supposed to see this lol"),
       ],
     });
-    [results, fields] = await db.execQuery(
+    let [results, fields] = await db.execQuery(
       `insert into state (msg_id, round_number, move_number, whose_turn) values (${global.msg.id}, 1, 1, -1)`
     );
     global.round_number = 1;
     global.move_number = 1;
     global.whose_turn = -1;
   } else {
-    result = results[0];
+    let result = results[0];
     try {
       global.msg = await ekrem.messages.fetch(result.msg_id);
     } catch (e) {
@@ -280,7 +282,7 @@ async function getState() {
             .setDescription("ur not supposed to see this lol"),
         ],
       });
-      [results, fields] = await db.execQuery(
+      let [results, fields] = await db.execQuery(
         `update state set msg_id = ${global.msg.id}`
       );
       update = true;
@@ -288,11 +290,11 @@ async function getState() {
     global = { ...global, ...result };
   }
   if (update) {
-    [results, fields] = await db.execQuery(
+    let [results, fields] = await db.execQuery(
       `select * from moves where round_number = ${global.round_number}`
     );
     for (result of results) {
-      [results, fields] = await db.execQuery(
+      let [results, fields] = await db.execQuery(
         `select * from moves where round_number = ${global.round_number}`
       );
       await placePiece(result.column_number, result.color);
@@ -309,13 +311,13 @@ var queue = [];
 client.on("ready", async () => {
   console.log(`Logged in as ${client.user.tag}!`);
 
-  guild = client.guilds.cache.get(global.guild);
-  ekrem = guild.channels.cache.get(global.ekrem);
+  guild = client.guilds.cache.get(config.guild);
+  ekrem = guild.channels.cache.get(config.ekrem);
 
   global.channels = {};
   global.roles = {};
 
-  for (channelName of Object.entries(global.channelNames)) {
+  for (let channelName of Object.entries(config.channelNames)) {
     console.log(channelName);
     global.channels[channelName[0]] = guild.channels.cache.find(
       (channel) => channel.name == channelName[1]
@@ -328,17 +330,17 @@ client.on("ready", async () => {
   await getWins();
 
   if (!update) {
-    [results, fields] = await db.execQuery(
+    let [results, fields] = await db.execQuery(
       `select * from moves where round_number = ${global.round_number}`
     );
-    for (result of results) {
+    for (let result of results) {
       await placePiece(result.column_number, result.color);
     }
   }
 
   if (update) await updateEkrem();
 
-  for (roleName of Object.entries(global.roleNames)) {
+  for (let roleName of Object.entries(config.roleNames)) {
     console.log(roleName);
     global.roles[roleName[0]] = guild.roles.cache.find(
       (role) => role.name == roleName[1]
@@ -346,7 +348,7 @@ client.on("ready", async () => {
   }
 
   while (true) {
-    for ([msg, newMsg] of queue) {
+    for (let [msg, newMsg] of queue) {
       await processMsg(msg, newMsg, repeat);
     }
     queue = [];
@@ -377,9 +379,9 @@ const processMsg = async (msg, newMsg, repeat) => {
     // 0: empty
     // 1: red
     // 2: blue
-    if (msg.channel.name == global.channelNames.redTeam) {
+    if (msg.channel.name == config.channelNames.redTeam) {
       color = 1;
-    } else if (msg.channel.name == global.channelNames.blueTeam) {
+    } else if (msg.channel.name == config.channelNames.blueTeam) {
       color = 2;
     } else {
       break placePiece; // break from place piece "function", because we're not supposed to if it's not in the right channel
@@ -412,7 +414,7 @@ const processMsg = async (msg, newMsg, repeat) => {
     }
 
     if (repeat.times > 1) {
-      if (repeat.times >= global.spamBlacklistCount) {
+      if (repeat.times >= config.spamBlacklistCount) {
         await blacklistPlayer(msg.author.id);
         await msg.reply({
           embeds: [
@@ -448,7 +450,7 @@ const processMsg = async (msg, newMsg, repeat) => {
     }
 
     column--;
-    [piecePlaced, y] = await placePiece(column, color, msg);
+    let [piecePlaced, y] = await placePiece(column, color, msg);
     if (piecePlaced) {
       var embed = await getBoardEmbed();
       var win = await checkFourInARow([color]);
@@ -516,15 +518,15 @@ const processMsg = async (msg, newMsg, repeat) => {
   ) {
     return 0;
   } // only process messages with command prefix
-  var command = msg.content.split(" ")[0].substr(global.prefix.length);
+  var command = msg.content.split(" ")[0].substr(config.prefix.length);
 
-  if (!global.commands[command] && !global.admin_commands[command]) return; // only use commands in config
+  if (!config.commands[command] && !config.admin_commands[command]) return; // only use commands in config
   var op = msg.content.split(" "); // operands
   var contents = msg.content.substr(
     msg.content.indexOf(op[0]) + op[0].length + 1
   );
 
-  if (msg.content.toLowerCase().startsWith(global.prefix)) {
+  if (msg.content.toLowerCase().startsWith(config.prefix)) {
     switch (
       command // commands for everyone
     ) {
@@ -550,14 +552,14 @@ const processMsg = async (msg, newMsg, repeat) => {
         break;
 
       case "help":
-        if (global.admins.includes(msg.author.id) || op[1] != "admin") {
+        if (config.admins.includes(msg.author.id) || op[1] != "admin") {
           var embed = embedTemplate()
-            .setTitle(global.title)
-            .setDescription(global.description);
+            .setTitle(config.title)
+            .setDescription(config.description);
           for (command of Object.entries(
-            op[1] == "admin" ? global.admin_commands : global.commands
+            op[1] == "admin" ? config.admin_commands : config.commands
           )) {
-            embed = embed.addField(global.prefix + command[0], command[1]);
+            embed = embed.addField(config.prefix + command[0], command[1]);
           }
           await msg.channel.send({ embeds: [embed] });
         } else {
@@ -574,12 +576,12 @@ const processMsg = async (msg, newMsg, repeat) => {
         break;
       case "adminhelp":
       case "helpadmin":
-        if (global.admins.includes(msg.author.id)) {
+        if (config.admins.includes(msg.author.id)) {
           var embed = embedTemplate()
-            .setTitle(global.title)
-            .setDescription(global.description);
-          for (command of Object.entries(global.admin_commands)) {
-            embed = embed.addField(global.prefix + command[0], command[1]);
+            .setTitle(config.title)
+            .setDescription(config.description);
+          for (command of Object.entries(config.admin_commands)) {
+            embed = embed.addField(config.prefix + command[0], command[1]);
           }
           await msg.channel.send({ embeds: [embed] });
         } else {

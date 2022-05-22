@@ -1,4 +1,5 @@
 let board = [];
+let width, height;
 
 async function sexSex() {
   await getBoard(); // ??? important
@@ -96,7 +97,8 @@ function workQuestionMark() {
 
     width = board[0].length;
     height = board.length;
-    if (detect(a) != s) throw new Error("YOURE BADDDDDDDDDDDDDDDDDDDDDDDDDDDD");
+    if (checkFourInARow(a) != s)
+      throw new Error("YOURE BADDDDDDDDDDDDDDDDDDDDDDDDDDDD");
   }
 
   hecker(
@@ -388,6 +390,84 @@ function workQuestionMark() {
   rrbbrrbbrr
   bbrrbbrrbb
   `,
+    [0, 2],
+    true
+  );
+
+  hecker(
+    `
+    rbrb___
+    rbrbrb_
+    rbrbrb_
+    brbrbr_
+    brbrbr_
+    brbrbr_
+    `,
+    [0, 1],
+    true
+  );
+
+  hecker(
+    `
+    rbrb___
+    rbrbrb_
+    rbrbrb_
+    brbrbr_
+    brbrbr_
+    brbrbr_
+    `,
+    [0, 2],
+    true
+  );
+
+  hecker(
+    `
+    rbrb__
+    rbrbrb
+    rbrbrb
+    brbrbr
+    brbrbr
+    brbrbr
+    `,
+    [0, 1],
+    false
+  );
+
+  hecker(
+    `
+    rbrb__
+    rbrbrb
+    rbrbrb
+    brbrbr
+    brbrbr
+    brbrbr
+    `,
+    [0, 2],
+    false
+  );
+
+  hecker(
+    `
+    rbrb__
+    rbrb_b
+    rbrbrb
+    brbrbr
+    brbrbr
+    brbrbr
+    `,
+    [0, 1],
+    false
+  );
+
+  hecker(
+    `
+    rbrb__
+    rbrb_b
+    rbrbrb
+    brbrbr
+    brbrbr
+    brbrbr
+    `,
     [0, 2],
     true
   );

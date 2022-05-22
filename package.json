@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Automatically unmutes someone in a VC after a specific amount of time has elapsed. ",
   "main": "bot.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -19,5 +20,8 @@
   "dependencies": {
     "discord.js": "^13.6.0",
     "mysql": "^2.18.1"
+  },
+  "devDependencies": {
+    "@types/mysql": "^2.15.21"
   }
 }

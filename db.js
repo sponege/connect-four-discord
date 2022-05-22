@@ -1,10 +1,11 @@
 var mysql = require("mysql"); // mysql -u root -p modmail
+var config = require("./config.js");
 var pool = mysql.createPool({
   connectionLimit: 10,
   host: "localhost",
   user: "root",
   password: "password",
-  database: global.database,
+  database: config.database,
   supportBigNumbers: true,
   bigNumberStrings: true,
 });
