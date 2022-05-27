@@ -34,28 +34,29 @@ type Config = {
     channelEkrem: string;
     channelRedTeam: string;
     channelBlueTeam: string;
+    channelChooseTeam: string;
   };
 
   channelNames: {
+    ekremChannel: string;
     chooseTeam: string;
     redTeam: string;
     blueTeam: string;
     trashTalk: string;
   };
+
   roleNames: {
     redTeam: string;
     blueTeam: string;
   };
+
   admins: string[];
+
   activity: {
     type: string;
     command: string;
   };
-  commands: {
-    top: string;
-    help: string;
-    "help admin": string;
-  };
+
   admin_commands: {
     list: string;
     reset: string;
@@ -75,10 +76,13 @@ type State = {
   config: Config;
   board?: Board<number, number>; // Array of columns.
   guild?: Guild;
-  ekremChannel?: TextChannel;
+  // ekremChannel?: TextChannel;
   ekremMessage?: Message;
-  redChannel?: TextChannel;
-  blueChannel?: TextChannel;
+  // redChannel?: TextChannel;
+  // blueChannel?: TextChannel;
+  channels?: {
+    [key in keyof Config["channelNames"]]: TextChannel;
+  };
 
   roundNumber?: number;
   moveNumber?: number;
@@ -103,7 +107,7 @@ function initBoard<W extends number, H extends number>(
   ) as Board<W, H>;
 }
 
-function getBoardEmbed(state: State): MessageEmbed {
+async function getBoardEmbed(state: State): Promise<MessageEmbed> {
   const { board, whoseTurn } = state;
 
   const team = ["Red", "Blue"][whoseTurn!] ?? "Any";
@@ -117,7 +121,35 @@ function getBoardEmbed(state: State): MessageEmbed {
 
   const description = `${emojiNumbers.join("")}\n${rows.join("\n")}`;
   embed.setDescription(description);
-  return embed;
+
+  return await updateEmbedWithDescription(state, embed);
+}
+
+async function updateEmbedWithDescription(
+  state: State,
+  embed: MessageEmbed
+): Promise<MessageEmbed> {
+  const { board, whoseTurn, roundNumber, moveNumber } = state;
+  let [[{ user_id }]] = await query(
+    state,
+    `select * from moves where round_number = ${roundNumber} order by move_number desc limit 1`
+  );
+
+  let [[{ red, blue }]] = await query(state, `select * from wins`);
+
+  let add = [
+    `Round ${roundNumber}`,
+    `Move ${moveNumber}`,
+
+    user_id
+      ? `Last move by <@${user_id}>`
+      : `Join a team at <#${state.channels?.chooseTeam.id}> and start a new game!`,
+    `Wins:`,
+    `Red Team - ${red}`,
+    `Blue Team - ${blue}`,
+  ].join("\n");
+
+  return embed.setDescription(embed.description + "\n" + add);
 }
 
 function query(
@@ -150,7 +182,7 @@ async function updateEkrem(state: State) {
   await state.ekremMessage!.edit({
     // TODO: updateEmbedWithDescription
     //embeds: [await updateEmbedWithDescription(getBoardEmbed(state))],
-    embeds: [getBoardEmbed(state)],
+    embeds: [await getBoardEmbed(state)],
   });
 }
 
@@ -158,7 +190,7 @@ async function updateEkrem(state: State) {
  * Expects ekremChannel to not be undefined.
  */
 async function getState(state: State): Promise<boolean> {
-  const { client, database, config, ekremChannel } = state;
+  const { client, database, config, channels } = state;
   const [stateResults] = await query(database, "select * from state");
 
   if (stateResults.length == 0) {
@@ -166,7 +198,7 @@ async function getState(state: State): Promise<boolean> {
     state.roundNumber = 1;
     state.moveNumber = 1;
     state.whoseTurn = -1;
-    state.ekremMessage = await ekremChannel!.send({
+    state.ekremMessage = await channels?.ekremChannel!.send({
       embeds: [
         embedTemplate()
           .setTitle("lol")
@@ -176,7 +208,9 @@ async function getState(state: State): Promise<boolean> {
 
     await query(
       database,
-      `insert into state (msg_id, round_number, move_number, whose_turn) values (${state.ekremMessage.id}, 1, 1, -1)`
+      `insert into state (msg_id, round_number, move_number, whose_turn) values (${
+        state.ekremMessage!.id
+      }, 1, 1, -1)`
     );
     return true;
   } else {
@@ -187,11 +221,11 @@ async function getState(state: State): Promise<boolean> {
     state.whoseTurn = whose_turn ? Team.BLUE : Team.RED;
 
     try {
-      state.ekremMessage = await ekremChannel!.messages.fetch(msg_id);
+      state.ekremMessage = await channels?.ekremChannel!.messages.fetch(msg_id);
       return false;
     } catch {
       // No message found? No issue, make a new one.
-      state.ekremMessage = await ekremChannel!.send({
+      state.ekremMessage = await channels?.ekremChannel!.send({
         embeds: [
           embedTemplate()
             .setTitle("lol")
@@ -201,7 +235,7 @@ async function getState(state: State): Promise<boolean> {
 
       await query(
         database,
-        `update state set msg_id = ${state.ekremMessage.id}`
+        `update state set msg_id = ${state.ekremMessage!.id}`
       );
     }
   }
@@ -297,19 +331,20 @@ async function onReady(state: State) {
 
   // Cache stuff from Discord so we don't have to keep querying for things.
   state.guild = client.guilds.cache.get(config.ids.guild)!;
-  state.ekremChannel = state.guild.channels.cache.get(
-    config.ids.channelEkrem
-  ) as TextChannel;
-  state.redChannel = state.guild.channels.cache.get(
-    config.ids.channelRedTeam
-  ) as TextChannel;
-  state.blueChannel = state.guild.channels.cache.get(
-    config.ids.channelBlueTeam
-  ) as TextChannel;
+
+  let channels: any = {};
+  for (let channelName of Object.entries(config.channelNames)) {
+    console.log(channelName);
+    channels[channelName[0]] = state.guild.channels.cache.find(
+      (channel) => channel.name == channelName[1]
+    );
+  }
+
+  state.channels = { ...channels };
 
   state.board = initBoard(config.width, config.height);
 
-  const update = await getState(state);
+  await getState(state);
   //await getWins();
 
   // TODO: ??? Duplicate code?
@@ -375,7 +410,7 @@ async function handlePlace(state: State, message: Message, team: Team) {
 
   const piece = await placePiece(state, column - 1, team, message.author.id);
   if (piece != null) {
-    const embed = getBoardEmbed(state);
+    const embed = await getBoardEmbed(state);
 
     if (checkFourInARow(state.board!, [team])) {
       // Win detection.
@@ -421,8 +456,8 @@ async function handlePlace(state: State, message: Message, team: Team) {
       state.board = initBoard(state.config.width, state.config.height);
     }
 
-    await state.redChannel!.send({ embeds: [embed] });
-    await state.blueChannel!.send({ embeds: [embed] });
+    await state.channels?.redTeam!.send({ embeds: [embed] });
+    await state.channels?.blueTeam!.send({ embeds: [embed] });
     await updateEkrem(state);
   } else {
     await message.reply({

@@ -12,9 +12,11 @@
       "guild": "968210951440588890",
       "channelEkrem": "974037476052193360",
       "channelRedTeam": "974030215435128862",
-      "channelBlueTeam": "974030233961373707"
+      "channelBlueTeam": "974030233961373707",
+      "channelChooseTeam": "bingus"
     },
     "channelNames": {
+      "ekremChannel": "ekrem",
       "chooseTeam": "choose-your-team",
       "redTeam": "red-team",
       "blueTeam": "blue-team",
