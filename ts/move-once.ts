@@ -408,6 +408,22 @@ async function handlePlace(state: State, message: Message, team: Team) {
     return;
   }
 
+  let [[{ moves }]] = await query(
+    state,
+    `select moves from users where user_id = ${message.author.id}`
+  );
+
+  if (moves && moves > 0) {
+    await message.reply({
+      embeds: [
+        embedTemplate()
+          .setTitle("You only have one move!")
+          .setDescription("Sorry bro :("),
+      ],
+    });
+    return;
+  } // only one move per player!
+
   const piece = await placePiece(state, column - 1, team, message.author.id);
   if (piece != null) {
     const embed = await getBoardEmbed(state);
