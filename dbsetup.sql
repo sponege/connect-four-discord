@@ -16,6 +16,8 @@ create table wins (
   blue int
 );
 
+insert into wins (red, blue) values (0, 0);
+
 create table moves (
   round_number int,
   move_number int,
