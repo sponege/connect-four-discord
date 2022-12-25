@@ -1,6 +1,6 @@
 {
   "development": {
-    "bot_token": "OTczNDM1MTczMzM1MTAxNDcw.G8iDQy.1qybdyDdqSPLHBMAi3R1MEN7zhHBZjoPZ_43uc",
+    "bot_token": "MTAzNjkyNzA3MzM4NzgyNzIwMA.GLR4zd.mBfgsrJvXfwO1d3w54eNPKKh4_n6pO7xLezmtE",
     "title": "Connect 4 Event",
     "description": "Join a team to play!",
     "prefix": ".",
@@ -9,10 +9,10 @@
     "height": 6,
     "spamBlacklistCount": 3,
     "ids": {
-      "guild": "968210951440588890",
-      "channelEkrem": "974037476052193360",
-      "channelRedTeam": "974030215435128862",
-      "channelBlueTeam": "974030233961373707",
+      "guild": "909719106700328960",
+      "channelEkrem": "942036417830354994",
+      "channelRedTeam": "973577460560035871",
+      "channelBlueTeam": "973577506705784862",
       "channelChooseTeam": "bingus"
     },
     "channelNames": {

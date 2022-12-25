@@ -8,6 +8,7 @@ import Discord, {
 } from "discord.js";
 import MySql, { Pool } from "mysql";
 import { exit, env, argv } from "process";
+const codeEsc = "```";
 
 import {
   FixedArray,
@@ -18,6 +19,19 @@ import {
   never,
 } from "./util.js";
 import config from "../config.json" assert { type: "json" };
+
+type commandTypes = {
+  top: string;
+  help: string;
+  "help admin": string;
+};
+
+type adminCommands = {
+  list: string;
+  reset: string;
+  blacklist: string;
+  unblacklist: string;
+};
 
 type Config = {
   bot_token: string;
@@ -57,12 +71,9 @@ type Config = {
     command: string;
   };
 
-  admin_commands: {
-    list: string;
-    reset: string;
-    blacklist: string;
-    unblacklist: string;
-  };
+  commands: commandTypes;
+
+  admin_commands: adminCommands;
 };
 
 enum Team {
@@ -179,11 +190,11 @@ async function isBlacklisted(state: State, user: string): Promise<boolean> {
  * Expecects ekremMessage to not be undefined.
  */
 async function updateEkrem(state: State) {
-  await state.ekremMessage!.edit({
+  /*await state.ekremMessage!.edit({
     // TODO: updateEmbedWithDescription
     //embeds: [await updateEmbedWithDescription(getBoardEmbed(state))],
     embeds: [await getBoardEmbed(state)],
-  });
+  });*/
 }
 
 /**
@@ -205,6 +216,7 @@ async function getState(state: State): Promise<boolean> {
           .setDescription("ur not supposed to see this lol"),
       ],
     });
+    console.log(state);
 
     await query(
       database,
@@ -225,7 +237,7 @@ async function getState(state: State): Promise<boolean> {
       return false;
     } catch {
       // No message found? No issue, make a new one.
-      state.ekremMessage = await channels?.ekremChannel!.send({
+      /*      state.ekremMessage = await channels?.ekremChannel!.send({
         embeds: [
           embedTemplate()
             .setTitle("lol")
@@ -236,7 +248,7 @@ async function getState(state: State): Promise<boolean> {
       await query(
         database,
         `update state set msg_id = ${state.ekremMessage!.id}`
-      );
+      );*/
     }
   }
 
@@ -350,8 +362,8 @@ async function onReady(state: State) {
   // TODO: ??? Duplicate code?
   /*
   if (!update) {
-    let [results, fields] = await db.execQuery(
-      `select * from moves where round_number = ${global.round_number}`
+    let [results, fields] = await query(
+      `select * from moves where round_number = ${config.round_number}`
     );
     for (let result of results) {
       await placePiece(result.column_number, result.color);
@@ -379,8 +391,156 @@ async function onMessage(state: State, message: Message) {
       ? Team.BLUE
       : -1;
   if (team != -1) handlePlace(state, message, team);
-
+  /*
   // TODO: Handle commands.
+  var command = message.content.split(" ")[0].substr(config.prefix.length);
+  if (command) if (!config.commands![command]) return;
+  if (message.content.toLowerCase().startsWith(config.prefix)) {
+    switch (
+      command // commands for everyone
+    ) {
+      case "top":
+        // sort by number of credits
+        let [lb, fields] = await query(
+          state,
+          "select * from users order by moves desc limit 10"
+        ); // descending
+        var leaderText = "";
+        for (var i = 0; i < lb.length; i++) {
+          leaderText += `#${i + 1}: <@${lb[i]["user_id"]}> Moves: ${
+            lb[i]["moves"]
+          }\n`;
+        }
+
+        var embed = new MessageEmbed()
+          .setColor("RANDOM")
+          .setTitle("Leaderboard")
+          .setDescription(leaderText);
+
+        message.channel.send({ embeds: [embed] });
+
+        break;
+
+      case "help":
+        if (config.admins.includes(message.author.id) || op[1] != "admin") {
+          var embed = embedTemplate()
+            .setTitle(config.title)
+            .setDescription(config.description);
+          for (command of Object.entries(
+            op[1] == "admin" ? config.admin_commands : config.commands
+          )) {
+            embed = embed.addField(config.prefix + command[0], command[1]);
+          }
+          await message.channel.send({ embeds: [embed] });
+        } else {
+          await message.channel.send({
+            embeds: [
+              embedTemplate()
+                .setTitle("Error")
+                .setDescription(
+                  "You are not in the admins list in the config file!"
+                ),
+            ],
+          });
+        }
+        break;
+      case "adminhelp":
+      case "helpadmin":
+        if (config.admins.includes(message.author.id)) {
+          var embed = embedTemplate()
+            .setTitle(config.title)
+            .setDescription(config.description);
+          for (command of Object.entries(config.admin_commands)) {
+            embed = embed.addField(config.prefix + command[0], command[1]);
+          }
+          await message.channel.send({ embeds: [embed] });
+        } else {
+          await message.channel.send({
+            embeds: [
+              embedTemplate()
+                .setTitle("Error")
+                .setDescription(
+                  "You are not in the admins list in the config file!"
+                ),
+            ],
+          });
+        }
+      case "echo":
+        var response = await message.channel.send(
+          contents ? contents : "You must supply a message to echo."
+        );
+        // await sleep(5000);
+        // message.delete();
+        // response.delete();
+        break;
+    }
+
+    if (message.channel.type != "DM") {
+      var user = message.guild.members.cache.find(
+        (member) => member.id == message.author.id
+      );
+      if (user.permissions.has("ADMINISTRATOR")) {
+        // commands for server admins
+        console.log(command);
+        switch (command) {
+        }
+      }
+    }
+
+    if (user.permissions.has("MANAGE_MESSAGES")) {
+      // commands for moderators
+      // (admins.includes(message.author.id)) {
+      // commands for bot owners
+      switch (command) {
+        case "list":
+          var messages = [];
+          client.guilds.cache.forEach(async (guild) => {
+            messages.push(
+              await message.channel.send({
+                embeds: [
+                  new MessageEmbed()
+                    .setColor("RANDOM")
+                    .setTitle(guild.name)
+                    .setDescription(
+                      [
+                        `Members: ${guild.memberCount}`,
+                        `ID: ${guild.id}`,
+                        `Permissions: ${codeEsc}${
+                          state.guild!.me!.permissions.toArray() || []
+                        }${codeEsc}`,
+                      ].join("\n")
+                    )
+                    .setThumbnail(state.guild!.iconURL() || ""),
+                ],
+              })
+            );
+          });
+          /**
+          await sleep(5000);
+          message.delete();
+          for (m of messages) {
+            m.delete();
+          }
+          break;
+        case "reset":
+          state.ekremMessage!.delete();
+          await query(state, `truncate users`);
+          await query(state, `truncate wins`);
+          await query(state, `truncate moves`);
+          await query(state, `truncate state`);
+          await message.channel.send({
+            embeds: [
+              embedTemplate()
+                .setTitle("ok")
+                .setDescription("everything was all fucked up ur welcome"),
+            ],
+          });
+          process.exit();
+      }
+    }
+	}
+}
+	*/
 }
 
 async function handlePlace(state: State, message: Message, team: Team) {
@@ -458,7 +618,7 @@ async function handlePlace(state: State, message: Message, team: Team) {
 
     await state.channels?.redTeam!.send({ embeds: [embed] });
     await state.channels?.blueTeam!.send({ embeds: [embed] });
-    await updateEkrem(state);
+    await state.ekremMessage!.edit({ embeds: [embed] });
   } else {
     await message.reply({
       embeds: [
