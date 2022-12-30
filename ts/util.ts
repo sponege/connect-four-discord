@@ -1,4 +1,5 @@
-import { MessageEmbed } from "discord.js";
+import { EmbedBuilder } from "discord.js";
+import config from "../config.json" assert { type: "json" };
 
 // click for free catboy pics
 // https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2F68.media.tumblr.com%2Ff7b9610c855d3382412c769648c17f43%2Ftumblr_oriokxsJIO1v6k268o1_500.png&f=1&nofb=1
@@ -6,10 +7,20 @@ import { MessageEmbed } from "discord.js";
 export type FixedArray<N extends number, T> = T[] & { length: N };
 
 /**
- * Creates a new {MessageEmbed} with a random color.
+ * Creates a new {EmbedBuilder} with a random color.
  */
-export function embedTemplate(): MessageEmbed {
-  return new MessageEmbed().setColor("RANDOM");
+export function embedTemplate(): EmbedBuilder {
+  return new EmbedBuilder().setColor(Math.floor(Math.random() * 16777215));
+}
+
+export async function getWeather(city: string) {
+  /**
+   * Uses the weatherapi.com API to fetch weather info for a city.
+   */
+  const response = await fetch(
+    `https://api.weatherapi.com/v1/current.json?key=${config.development.weatherAPIKey}&q=${city}`
+  );
+  return response.json();
 }
 
 /**
@@ -50,7 +61,7 @@ export function* range2d(
 export function checkFourInARow<T, W extends number, H extends number>(
   array: FixedArray<W, FixedArray<H, T>>,
   elements: T[]
-): boolean {
+): boolean | Array<[number, number]> {
   const [w, h] = [array.length, (array[0] ?? []).length];
 
   function check(x: number, y: number): boolean {
@@ -65,7 +76,12 @@ export function checkFourInARow<T, W extends number, H extends number>(
   // Downwards
   for (let [x, y] of range2d([w, h - 3]))
     if (check(x, y + 3) && check(x, y + 2) && check(x, y + 1) && check(x, y))
-      return true;
+      return [
+        [x, y],
+        [x, y + 1],
+        [x, y + 2],
+        [x, y + 3],
+      ];
 
   // ----
   // ----
@@ -75,7 +91,12 @@ export function checkFourInARow<T, W extends number, H extends number>(
   // Rightwards
   for (let [x, y] of range2d([w - 3, h]))
     if (check(x + 3, y) && check(x + 2, y) && check(x + 1, y) && check(x, y))
-      return true;
+      return [
+        [x, y],
+        [x + 1, y],
+        [x + 2, y],
+        [x + 3, y],
+      ];
 
   // Diagnonal
   for (let [x, y] of range2d([w - 3, h - 3])) {
@@ -90,7 +111,12 @@ export function checkFourInARow<T, W extends number, H extends number>(
       check(x + 1, y + 1) &&
       check(x, y)
     )
-      return true;
+      return [
+        [x, y],
+        [x + 1, y + 1],
+        [x + 2, y + 2],
+        [x + 3, y + 3],
+      ];
 
     // x---
     // -x--
@@ -103,7 +129,12 @@ export function checkFourInARow<T, W extends number, H extends number>(
       check(x + 1, y + 2) &&
       check(x, y + 3)
     )
-      return true;
+      return [
+        [x, y + 3],
+        [x + 1, y + 2],
+        [x + 2, y + 1],
+        [x + 3, y],
+      ];
   }
 
   return false;
