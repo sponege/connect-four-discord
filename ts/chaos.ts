@@ -157,7 +157,7 @@ async function getBoardEmbed(
   const teamWhomMadeLastMove = board![lastMoveCoords[0]][
     lastMoveCoords[1]
   ] as Team;
-  const embed = embedTemplate().setTitle(
+  let embed = embedTemplate().setTitle(
     finishedGame
       ? `Full Board from Round ${state.roundNumber}`
       : snapshot
@@ -231,16 +231,19 @@ async function getBoardEmbed(
 
   const description = `${emojiNumbers.join("")}\n${rows.join("\n")}`;
 
-  return embed.setDescription(
-    description +
-      (await updateEmbedWithDescription(
-        state,
-        embed,
-        finishedGame ? true : false,
-        snapshot ? true : false,
-        winner ?? -1
-      ))
+  let [description2, footer] = await updateEmbedWithDescription(
+    state,
+    embed,
+    finishedGame ? true : false,
+    snapshot ? true : false,
+    winner ?? -1
   );
+
+  embed = embed.setDescription(description + description2).setFooter({
+    text: footer,
+  });
+
+  return embed;
 }
 
 async function updateEmbedWithDescription(
@@ -249,7 +252,7 @@ async function updateEmbedWithDescription(
   finishedGame?: boolean,
   snapshot?: boolean,
   winner?: Team | -1
-): Promise<string> {
+): Promise<Array<string>> {
   const { board, whoseTurn, roundNumber, moveNumber } = state;
   let user_ids: Array<Array<{ user_id: number }>>;
   let user_id: number | null;
@@ -267,36 +270,38 @@ async function updateEmbedWithDescription(
   let [[{ red, blue }]] = await query(state, `select * from wins`);
   console.log(`Winner of round ${roundNumber} is ${winner!}`);
 
-  let add = [
-    `Round ${roundNumber}`,
-    finishedGame
-      ? ["Draw", "Red Wins", "Blue Wins"][winner! + 1]
-      : `Move ${moveNumber}`,
+  let footerArr = [`Round ${roundNumber}`, `Move ${moveNumber}`];
 
+  if (finishedGame)
+    footerArr.push(["Draw", "Red Wins", "Blue Wins"][winner! + 1]);
+
+  let footer = footerArr.join("・");
+
+  let add = [
     user_id
       ? `${finishedGame ? "Final" : "Last"} move by <@${user_id}>`
       : `Join a team at <#${state.channels?.chooseTeam.id}> and start a new game!`,
   ];
 
   if (user_id == null) {
-    add = add.slice(0, 1);
+    footer = "";
   }
 
   if (!snapshot) {
-    add.push(`Red Team: ${red} | Blue Team: ${blue}`);
-  } else {
-    add.splice(0, 1);
+    if (footer) footer += "・";
+    footer += `Red: ${red}・Blue: ${blue}`;
   }
   if (user_ids[0])
     add.push(
-      `Players in this round${finishedGame ? "" : " so far"}: ${Array.from(
+      `👥 ${Array.from(
         // sets make everything unique, players move multiple times and we want to show each player only once, not multiple times
         new Set(user_ids[0].map((player) => "<@" + player.user_id + ">"))
       ).join(", ")}`
     );
+
   let description = "\n" + add.join("\n");
 
-  return description;
+  return [description, footer];
 }
 
 function query(
@@ -856,6 +861,8 @@ async function onInteraction(state: State, interaction: Interaction) {
             return "☁️";
           case "Thunderstorm":
             return "⛈️";
+          case "Fog":
+            return "🌫️";
 
           default:
             return "❓";
@@ -935,6 +942,8 @@ async function onInteraction(state: State, interaction: Interaction) {
         database,
         `select * from moves where round_number = ${round_number} and move_number < ${move_number} order by move_number asc`
       );
+      if (move_number > moveResults.length) move_number = moveResults.length;
+
       let oldState = {
         board: state.board,
         roundNumber: state.roundNumber,
