@@ -296,7 +296,7 @@ async function updateEmbedWithDescription(
       `👥 ${Array.from(
         // sets make everything unique, players move multiple times and we want to show each player only once, not multiple times
         new Set(user_ids[0].map((player) => "<@" + player.user_id + ">"))
-      ).join(", ")}`
+      ).join(" ")}`
     );
 
   let description = "\n" + add.join("\n");
