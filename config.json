@@ -41,6 +41,7 @@
       "reset": "Fucking resets *everything*",
       "blacklist": "Blasklists a player",
       "unblacklist": "Unblacklists a player"
-    }
+    },
+		"weatherAPIKey": "d24234757af6484f9dd204704220208"
   }
 }
