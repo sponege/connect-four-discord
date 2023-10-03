@@ -1,5 +1,5 @@
-# Troll Emojifier
-Gives trolls a special emoji for each message they send :D
+# Connect Four Discord Bot
+Can host multiple games of Connect 4 in your Discord server!
 
 # Installation
 Install [Node.js](https://nodejs.org/) for your OS of choice
